@@ -25,9 +25,9 @@ public class PowershellTaskCommand : ITaskCommand
                 CreateNoWindow = true
             };
             var process = Process.Start(processInfo);
-            process.WaitForExit();
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
+            process?.WaitForExit();
+            var output = process?.StandardOutput.ReadToEnd();
+            var error = process?.StandardError.ReadToEnd();
 
             _logger.LogInformation($"PowerShell Command Output: {output}");
             if (!string.IsNullOrEmpty(error))

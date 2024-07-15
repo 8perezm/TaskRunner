@@ -2,5 +2,5 @@
 
 public interface ITriggerCommandFactory
 {
-    ITriggerCommand CreateTriggerCommand(string triggerName);
+    ITriggerCommand? CreateTriggerCommand(string triggerName);
 }

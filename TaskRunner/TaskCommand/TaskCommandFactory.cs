@@ -14,7 +14,7 @@ public class TaskCommandFactory : ITaskCommandFactory
         _taskCommandTypes = taskCommandTypes;
     }
 
-    public ITaskCommand CreateTaskCommand(string taskType)
+    public ITaskCommand? CreateTaskCommand(string taskType)
     {
         if (_taskCommandTypes.TryGetValue(taskType.ToLower(), out var type))
         {

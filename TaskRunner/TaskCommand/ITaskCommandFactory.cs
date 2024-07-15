@@ -8,5 +8,5 @@ namespace TaskRunner.TaskCommand;
 
 public interface ITaskCommandFactory
 {
-    ITaskCommand CreateTaskCommand(string taskType);
+    ITaskCommand? CreateTaskCommand(string taskType);
 }

@@ -65,7 +65,7 @@ public class TaskRunnerService : BackgroundService
         string result = Regex.Replace(yamlContent, pattern, match =>
         {
             string key = match.Groups[1].Value;
-            return vars.TryGetValue(key, out string value) ? value : match.Value;
+            return vars.TryGetValue(key, out var value) ? value : match.Value;
         });
 
         return result;
