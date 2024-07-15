@@ -24,9 +24,9 @@ public class BashTaskCommand : ITaskCommand
                 CreateNoWindow = true
             };
             var process = Process.Start(processInfo);
-            process.WaitForExit();
-            Console.WriteLine(process.StandardOutput.ReadToEnd());
-            Console.Error.WriteLine(process.StandardError.ReadToEnd());
+            process?.WaitForExit();
+            Console.WriteLine(process?.StandardOutput.ReadToEnd());
+            Console.Error.WriteLine(process?.StandardError.ReadToEnd());
         }
     }
 }

@@ -8,8 +8,8 @@ namespace TaskRunner.TaskCommand;
 
 public class MqttTaskCommand : ITaskCommand
 {
-    private IMqttClient _mqttClient;
-    private MqttClientOptions _options;
+    private IMqttClient? _mqttClient;
+    private MqttClientOptions? _options;
     private readonly ILogger<MqttTaskCommand> _logger;
 
     public MqttTaskCommand(ILogger<MqttTaskCommand> logger)
@@ -40,10 +40,12 @@ public class MqttTaskCommand : ITaskCommand
             .WithPayload(publish)
             .Build();
 
-            await _mqttClient.ConnectAsync(_options, CancellationToken.None);
-            await _mqttClient.PublishAsync(message);
-            await _mqttClient.DisconnectAsync();
-
+            if(_mqttClient != null)
+            {
+                await _mqttClient.ConnectAsync(_options, CancellationToken.None);
+                await _mqttClient.PublishAsync(message);
+                await _mqttClient.DisconnectAsync();
+            }
         }
     }
 

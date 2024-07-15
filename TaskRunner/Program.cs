@@ -39,8 +39,12 @@ builder.Services.AddSingleton<ITriggerCommandFactory, TriggerCommandFactory>();
 builder.Services.AddSingleton<ITaskCommandFactory, TaskCommandFactory>();
 builder.Services.AddTransient<ITaskRunnerFactory, TaskRunnerFactory>();
 
-builder.Services.AddHostedService<TaskRunnerService>(provider =>
-    new TaskRunnerService(provider.GetRequiredService<ILogger<TaskRunnerService>>(), builder.Configuration["Project:Folder"], provider.GetRequiredService<ITaskRunnerFactory>()));
+var projectFolder = builder.Configuration["Project:Folder"];
+if (projectFolder != null && Directory.Exists(projectFolder))
+{
+    builder.Services.AddHostedService<TaskRunnerService>(provider =>
+    new TaskRunnerService(provider.GetRequiredService<ILogger<TaskRunnerService>>(), projectFolder, provider.GetRequiredService<ITaskRunnerFactory>()));
+}
 
 var host = builder.Build();
 host.Run();

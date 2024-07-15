@@ -16,13 +16,12 @@ public class TriggerCommandFactory : ITriggerCommandFactory
         _serviceProvider = serviceProvider;
         _triggerCommandTypes = triggerCommandTypes;
     }
-    public ITriggerCommand CreateTriggerCommand(string triggerName)
+    public ITriggerCommand? CreateTriggerCommand(string triggerName)
     {
         if (_triggerCommandTypes.TryGetValue(triggerName.ToLower(), out var type))
         {
             return _serviceProvider.GetRequiredService(type) as ITriggerCommand;
         }
         throw new ArgumentException($"Unknown task type: {triggerName}");
-        throw new NotImplementedException();
     }
 }
