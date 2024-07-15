@@ -10,23 +10,22 @@ namespace TaskRunner.Trigger;
 
 public class ScheduleTriggerCommand : ITriggerCommand
 {
-    private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private readonly ILogger<ScheduleTriggerCommand> _logger;
 
     public ScheduleTriggerCommand(ILogger<ScheduleTriggerCommand> logger)
     {
         _logger = logger;
     }
-    public void Execute(ITaskRunner taskRunner, Model.Trigger trigger)
+    public void Execute(ITaskRunner taskRunner, Model.Trigger trigger, CancellationToken ct)
     {
-        if(trigger.Input.TryGetValue("cron", out var cronExpression))
+        if (trigger.Input.TryGetValue("cron", out var cronExpression))
         {
             var schedule = CrontabSchedule.Parse(cronExpression);
             var nextRun = schedule.GetNextOccurrence(DateTime.Now);
 
             System.Threading.Tasks.Task.Run(async () =>
             {
-                while (!_cancellationTokenSource.IsCancellationRequested)
+                while (!ct.IsCancellationRequested)
                 {
                     var now = DateTime.Now;
                     var nextrun = schedule.GetNextOccurrence(now);
@@ -42,9 +41,9 @@ public class ScheduleTriggerCommand : ITriggerCommand
                         }
                         nextRun = schedule.GetNextOccurrence(DateTime.Now);
                     }
-                    await System.Threading.Tasks.Task.Delay(1000); // Check every 10 seconds
+                    await System.Threading.Tasks.Task.Delay(1000, ct); // Check every 10 seconds
                 }
-            }, _cancellationTokenSource.Token);
+            }, ct);
         }
         else
         {

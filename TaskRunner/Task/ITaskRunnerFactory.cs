@@ -9,5 +9,5 @@ namespace TaskRunner.Task;
 
 public interface ITaskRunnerFactory
 {
-    ITaskRunner CreateTaskRunner(TaskDefinition taskDefinition);
+    ITaskRunner CreateTaskRunner(TaskDefinition taskDefinition, CancellationToken ct);
 }

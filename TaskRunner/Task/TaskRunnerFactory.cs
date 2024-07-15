@@ -13,12 +13,12 @@ public class TaskRunnerFactory : ITaskRunnerFactory
         _serviceProvider = serviceProvider;
     }
 
-    public ITaskRunner CreateTaskRunner(TaskDefinition taskDefinition)
+    public ITaskRunner CreateTaskRunner(TaskDefinition taskDefinition, CancellationToken ct)
     {
         var logger = _serviceProvider.GetRequiredService<ILogger<TaskRunner>>();
         var triggerCommandFactory = _serviceProvider.GetRequiredService<ITriggerCommandFactory>();
         var taskCommandFactory = _serviceProvider.GetRequiredService<ITaskCommandFactory>();
 
-        return new TaskRunner(logger, triggerCommandFactory, taskCommandFactory, _serviceProvider, taskDefinition);
+        return new TaskRunner(logger, triggerCommandFactory, taskCommandFactory, _serviceProvider, taskDefinition, ct);
     }
 }
