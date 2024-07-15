@@ -10,7 +10,7 @@ public class TaskRunnerService : BackgroundService
     private readonly IDeserializer _deserializer;
     private readonly ITaskRunnerFactory _taskRunnerFactory;
     private readonly ILogger _logger;
-    private Dictionary<string, ITaskRunner> taskRunners = new Dictionary<string, ITaskRunner>();
+    private Dictionary<string, (ITaskRunner taskRunner, DateTime lastModified, CancellationTokenSource cts)> taskRunners = new Dictionary<string, (ITaskRunner, DateTime, CancellationTokenSource)>();
 
     public TaskRunnerService(ILogger<TaskRunnerService> logger, string folderPath, ITaskRunnerFactory taskRunnerFactory)
     {
@@ -22,19 +22,19 @@ public class TaskRunnerService : BackgroundService
         _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
             ScanFolderAndRunTasks();
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); // Adjust the delay based on your trigger cron settings
+            await Task.Delay(TimeSpan.FromMinutes(1), ct); // Adjust the delay based on your trigger cron settings
         }
     }
 
     private void ScanFolderAndRunTasks()
     {
         var yamlFiles = Directory.GetFiles(_folderPath, "*.yaml");
-        if(yamlFiles == null || yamlFiles.Length == 0)
+        if (yamlFiles == null || yamlFiles.Length == 0)
         {
             _logger.LogInformation("No tasks found in the folder");
             return;
@@ -43,22 +43,49 @@ public class TaskRunnerService : BackgroundService
         {
             foreach (var file in yamlFiles)
             {
-                var yamlContent = File.ReadAllText(file);
-                var taskDefinition = _deserializer.Deserialize<TaskDefinition>(yamlContent);
+                var lastModified = File.GetLastWriteTime(file);
 
-                var yamlContentWithVars = ReplaceVariables(taskDefinition.Variables, yamlContent);
-                taskDefinition = _deserializer.Deserialize<TaskDefinition>(yamlContentWithVars);
+                if (!taskRunners.ContainsKey(file) || taskRunners[file].lastModified < lastModified)
+                {
+                    // Read the yaml content and deserialize it
+                    var yamlContent = File.ReadAllText(file);
+                    var taskDefinition = _deserializer.Deserialize<TaskDefinition>(yamlContent);
 
-                var taskRunner = _taskRunnerFactory.CreateTaskRunner(taskDefinition);
-                taskRunner.RunTrigger();
+                    // Replace variables in the yaml content
+                    var yamlContentWithVars = ReplaceVariables(taskDefinition.Variables, yamlContent);
+                    taskDefinition = _deserializer.Deserialize<TaskDefinition>(yamlContentWithVars);
 
-                taskRunners.Add(file, taskRunner);
+                    var cts = new CancellationTokenSource();
+
+                    // Cancel the old task runner if the file has been modified
+                    if(taskRunners.ContainsKey(file))
+                    {
+                        _logger.LogInformation($"File {file} has been modified. Removing old task runner");
+                        taskRunners[file].cts.Cancel();
+                    }
+
+                    _logger.LogInformation($"Creating task runner for file {file}");
+                    var taskRunner = _taskRunnerFactory.CreateTaskRunner(taskDefinition, cts.Token);
+                    taskRunners[file] = (taskRunner, lastModified, cts);
+                    taskRunner.RunTrigger();
+                }
+            }
+
+            // Remove task runners for files that have been deleted
+            var filesSet = yamlFiles.ToHashSet();
+            var keysToRemove = taskRunners.Keys.Where(k => !filesSet.Contains(k)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _logger.LogInformation($"Removing task runner for file {key}");
+                taskRunners[key].cts.Cancel();
+                taskRunners.Remove(key);
             }
         }
     }
 
     private string ReplaceVariables(Dictionary<string, string> vars, string yamlContent)
     {
+        // Regex pattern to match $(**)
         string pattern = @"\$\((.*?)\)";
 
         // Replacing the placeholders with values from the dictionary

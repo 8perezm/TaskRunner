@@ -16,15 +16,16 @@ public class TaskRunner : ITaskRunner
     private readonly IServiceProvider _serviceProvider;
     private readonly TaskDefinition _taskDefinition;
     private readonly ITriggerCommandFactory _triggerCommandFactory;
+    private CancellationToken _ct;
 
-    public TaskRunner(ILogger<TaskRunner> logger, ITriggerCommandFactory triggerCommandFactory, ITaskCommandFactory taskCommandFactory, IServiceProvider serviceProvider, TaskDefinition taskDefinition)
+    public TaskRunner(ILogger<TaskRunner> logger, ITriggerCommandFactory triggerCommandFactory, ITaskCommandFactory taskCommandFactory, IServiceProvider serviceProvider, TaskDefinition taskDefinition, CancellationToken ct)
     {
         _taskCommandFactory = taskCommandFactory;
         _logger = logger;
         _serviceProvider = serviceProvider;
         _taskDefinition = taskDefinition;
         _triggerCommandFactory = triggerCommandFactory;
-
+        _ct = ct;
         //_logger.LogInformation($"TaskRunner created with {tasks.Count} tasks");
     }
 
@@ -33,7 +34,7 @@ public class TaskRunner : ITaskRunner
         try
         {
             var triggerCommand = _triggerCommandFactory.CreateTriggerCommand(_taskDefinition.Trigger.Name);
-            triggerCommand.Execute(this, _taskDefinition.Trigger);
+            triggerCommand.Execute(this, _taskDefinition.Trigger, _ct);
         }
         catch (Exception ex)
         {

@@ -9,5 +9,5 @@ namespace TaskRunner.Trigger;
 
 public interface ITriggerCommand
 {
-    void Execute(ITaskRunner parent, Model.Trigger trigger);
+    void Execute(ITaskRunner parent, Model.Trigger trigger, CancellationToken ct);
 }

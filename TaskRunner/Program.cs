@@ -40,6 +40,7 @@ builder.Services.AddSingleton<ITaskCommandFactory, TaskCommandFactory>();
 builder.Services.AddTransient<ITaskRunnerFactory, TaskRunnerFactory>();
 
 var projectFolder = builder.Configuration["Project:Folder"];
+Console.WriteLine($"Project folder: {projectFolder}");
 if (projectFolder != null && Directory.Exists(projectFolder))
 {
     builder.Services.AddHostedService<TaskRunnerService>(provider =>
